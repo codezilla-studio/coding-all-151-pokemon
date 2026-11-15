@@ -1,0 +1,65 @@
+<!doctype html>
+<!-- @codezilla.studio – Galerie: listet automatisch alle Pokémon-Dateien im Repo -->
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coding all 151 Pokémon – Codezilla</title>
+<style>
+  :root { --bg: #0a0a10; --mid: #2a1640; --green: #4ade80; --pink: #f9a8d4; --text: #fff; --muted: #a8a8c0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; color: var(--text);
+         background: radial-gradient(circle at 50% 0, var(--mid), var(--bg) 70%) fixed; }
+  header { text-align: center; padding: 48px 16px 24px; }
+  h1 { margin: 0; font-size: clamp(28px, 6vw, 48px); }
+  h1 span { color: var(--green); }
+  header p { margin: 8px 0 0; color: var(--pink); font-weight: 600; }
+  .count { color: var(--muted); font-size: 14px; margin-top: 12px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 0 16px 48px;
+         display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
+  a.card { display: block; text-decoration: none; color: inherit; background: #111118; border: 2px solid #2e2e48;
+           border-radius: 14px; overflow: hidden; transition: border-color .2s, transform .2s; }
+  a.card:hover { border-color: var(--green); transform: translateY(-3px); }
+  .frame { aspect-ratio: 1; background: #111; overflow: hidden; position: relative; }
+  .frame iframe { position: absolute; inset: 0; width: 400%; height: 400%; border: 0;
+                  transform: scale(.25); transform-origin: 0 0; pointer-events: none; }
+  .name { padding: 10px 12px; font-weight: 700; font-size: 14px; }
+  .name b { color: var(--green); margin-right: 6px; }
+  .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 16px 32px; }
+  footer a { color: var(--green); }
+</style>
+<header>
+  <h1>🦖 Coding all <span>151</span> Pokémon</h1>
+  <p>Every pixel is pure CSS – no images</p>
+  <div class="count" id="count">Loading …</div>
+</header>
+<main id="grid"></main>
+<footer>
+  Watch them being coded:
+  <a href="https://www.youtube.com/@codezilla.studio">YouTube</a> ·
+  <a href="https://www.tiktok.com/@codezilla.studio">TikTok</a> ·
+  <a href="https://www.instagram.com/codezilla.studio">Instagram</a><br><br>
+  Fan art – Pokémon © Nintendo / Game Freak / Creatures. Not affiliated.
+</footer>
+<script>
+  // Liest die Dateiliste des Repos und zeigt jede Datei „001-bulbasaur.html“ als Karte mit Vorschau
+  const grid = document.getElementById('grid'), count = document.getElementById('count');
+  const title = s => s.replace(/(^|-)\w/g, c => c.toUpperCase()).replace(/-/g, ' ');
+  fetch('https://api.github.com/repos/codezilla-studio/coding-all-151-pokemon/contents/')
+    .then(r => r.json())
+    .then(files => {
+      const items = files.map(f => f.name.match(/^(\d{3})-([a-z0-9-]+)\.html$/)).filter(Boolean)
+        .sort((a, b) => a[1] - b[1]);
+      count.textContent = `${items.length} / 151 coded`;
+      if (!items.length) grid.innerHTML = '<p class="empty">The first Pokémon are on their way …</p>';
+      for (const [file, nr, slug] of items) {
+        const a = document.createElement('a');
+        a.className = 'card'; a.href = file;
+        a.innerHTML = `<div class="frame"><iframe src="${file}" loading="lazy" tabindex="-1" title="${title(slug)}"></iframe></div>
+          <div class="name"><b>#${nr}</b>${title(slug)}</div>`;
+        grid.appendChild(a);
+      }
+    })
+    .catch(() => { count.textContent = ''; grid.innerHTML = '<p class="empty">Could not load the list – try again later.</p>'; });
+</script>
+</html>

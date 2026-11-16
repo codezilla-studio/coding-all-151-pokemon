@@ -9,19 +9,67 @@
   * { box-sizing: border-box; }
   body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; color: var(--text);
          background: radial-gradient(circle at 50% 0, var(--mid), var(--bg) 70%) fixed; }
-  header { text-align: center; padding: 48px 16px 28px; }
-  h1 { margin: 0; font-size: clamp(28px, 6vw, 48px); }
-  h1 span { color: var(--green); }
-  header p { margin: 8px 0 0; color: var(--pink); font-weight: 600; }
+  header { text-align: center; padding: 44px 16px 28px; position: relative; }
+  /* feines Pixel-Raster im Hintergrund, nach unten ausgeblendet */
+  header::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image: linear-gradient(rgba(74,222,128,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(74,222,128,.06) 1px, transparent 1px);
+    background-size: 24px 24px; mask-image: linear-gradient(#000, transparent 85%); -webkit-mask-image: linear-gradient(#000, transparent 85%); }
+  .hero { display: flex; align-items: center; justify-content: center; gap: clamp(14px, 3vw, 28px); flex-wrap: wrap; }
+  /* Der Dino – selbst aus CSS-Pixeln (box-shadow), wie alles hier */
+  .dino { width: 96px; height: 96px; position: relative; animation: bob 2.4s ease-in-out infinite;
+          filter: drop-shadow(0 0 18px rgba(74,222,128,.45)); }
+  .dino i { position: absolute; left: -6px; top: -6px; width: 6px; height: 6px; }
+  @keyframes bob { 50% { transform: translateY(-6px); } }
+  h1 { margin: 0; font-size: clamp(30px, 6.5vw, 58px); font-weight: 900; line-height: 1.05; letter-spacing: -.02em; text-align: left; }
+  h1 small { display: block; font-size: .42em; font-weight: 700; letter-spacing: .28em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+  h1 .num { background: linear-gradient(180deg, #bbf7d0, var(--green) 55%, #16a34a); -webkit-background-clip: text; background-clip: text;
+            color: transparent; filter: drop-shadow(0 0 14px rgba(74,222,128,.55)); }
+  /* Code-Fenster wie im Video – der Untertitel wird getippt */
+  .term { display: inline-flex; align-items: center; gap: 10px; margin-top: 22px; padding: 10px 16px; border-radius: 12px;
+          background: #0d0d14; border: 1px solid var(--line); font: 14px/1.4 ui-monospace, Consolas, monospace; max-width: 100%; }
+  .term .dots { display: flex; gap: 5px; flex: none; }
+  .term .dots i { width: 9px; height: 9px; border-radius: 50%; }
+  .term code { color: #c9c9e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .term .k { color: var(--pink); } .term .s { color: var(--green); } .term .c { color: #6b6b85; }
+  .term .cur { display: inline-block; width: 8px; height: 1.1em; background: var(--green); vertical-align: -2px; margin-left: 1px;
+               animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (max-width: 560px) {
+    h1 { text-align: center; }
+    .term { font-size: 12px; } .term code { white-space: normal; }
+    /* drei Karten + Pfeile passen nebeneinander aufs Handy */
+    main { padding: 0 8px 40px; gap: 10px; }
+    .line { padding: 6px; border-radius: 14px; } .steps { gap: 2px; }
+    .arrow { font-size: 15px; padding: 0; }
+    .card { width: calc((100vw - 76px) / 3) !important; max-width: 120px; border-radius: 11px; }
+    .name { font-size: 11px; padding: 6px 7px; }
+    .type { font-size: 10px; }
+  }
   .progress { width: min(420px, 90%); margin: 18px auto 0; }
   .bar { height: 10px; border-radius: 99px; background: #1b1b2a; overflow: hidden; border: 1px solid var(--line); }
   .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--green), #22c55e); transition: width .8s; }
   .count { color: var(--muted); font-size: 14px; margin-top: 8px; }
+  .socials { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
+  .socials a { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 99px; text-decoration: none;
+               color: var(--text); font: 600 14px system-ui; background: rgba(255,255,255,.05); border: 1px solid var(--line);
+               transition: border-color .2s, background .2s, transform .2s; }
+  .socials a:hover { border-color: var(--green); background: rgba(74,222,128,.08); transform: translateY(-2px); }
+  .socials svg { width: 18px; height: 18px; fill: currentColor; }
+  .socials .yt svg { color: #ff4e45; } .socials .ig svg { color: #f472b6; }
 
   main { max-width: 1200px; margin: 0 auto; padding: 0 16px 48px; display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
   /* Eine Entwicklungslinie = ein Kasten mit Karten und Pfeilen */
-  .line { display: flex; align-items: center; gap: 6px; padding: 10px; border-radius: 18px;
+  .line { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; border-radius: 18px;
           background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
+  .steps { display: flex; align-items: center; gap: 6px; }
+  /* 🧬-Knopf unter einer fertigen Entwicklungslinie */
+  .evo { font: 700 12px system-ui; color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent);
+         border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); border-radius: 99px; padding: 6px 14px; cursor: pointer;
+         transition: background .2s, transform .2s; }
+  .evo:hover { background: color-mix(in srgb, var(--c) 25%, transparent); transform: translateY(-1px); }
+  .dlg-art.row { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 10px; }
+  .dlg-art.row iframe { position: static; flex: 1; min-width: 0; height: 70%; }
+  .dlg-art.row .arrow { flex: none; color: var(--c); }
   .branch { display: flex; flex-direction: column; gap: 8px; }
   .arrow { color: var(--muted); font-size: 22px; font-weight: 800; padding: 0 2px; }
 
@@ -65,9 +113,23 @@
   footer a { color: var(--green); }
 </style>
 <header>
-  <h1>🦖 Coding all <span>151</span> Pokémon</h1>
-  <p>Every pixel is pure CSS – no images</p>
+  <div class="hero">
+    <div class="dino" id="dino" role="img" aria-label="Codezilla dino"><i></i></div>
+    <h1><small>Codezilla presents</small>Coding all <span class="num">151</span><br>Pokémon</h1>
+  </div>
+  <div class="term" aria-label="Every pixel is pure CSS – no images">
+    <span class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></span>
+    <code id="typed"></code>
+  </div>
   <div class="progress"><div class="bar"><i id="bar"></i></div><div class="count" id="count">Loading …</div></div>
+  <nav class="socials" aria-label="Watch them being coded">
+    <a class="yt" href="https://www.youtube.com/@codezilla.studio" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>YouTube</a>
+    <a class="tt" href="https://www.tiktok.com/@codezilla.studio" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 6.7a4.8 4.8 0 0 1-3.8-4.3V2h-3.4v13.7a2.9 2.9 0 1 1-2-2.8V9.4a6.3 6.3 0 1 0 5.4 6.3V8.8a8.2 8.2 0 0 0 4.8 1.5V6.9a4.8 4.8 0 0 1-1-.2z"/></svg>TikTok</a>
+    <a class="ig" href="https://www.instagram.com/codezilla.studio" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-3.3-.1-4.8-1.7-4.9-4.9C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8C2.4 3.9 3.9 2.4 7.2 2.3c1.2-.1 1.6-.1 4.8-.1zM12 0C8.7 0 8.3 0 7.1.1 2.7.3.3 2.7.1 7.1 0 8.3 0 8.7 0 12s0 3.7.1 4.9c.2 4.4 2.6 6.8 7 7 1.2.1 1.6.1 4.9.1s3.7 0 4.9-.1c4.4-.2 6.8-2.6 7-7 .1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9c-.2-4.4-2.6-6.8-7-7C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.8a1.4 1.4 0 1 0 0 2.9 1.4 1.4 0 0 0 0-2.9z"/></svg>Instagram</a>
+  </nav>
 </header>
 <main id="grid"></main>
 <dialog id="dlg">
@@ -78,7 +140,7 @@
       <a id="open" target="_blank" rel="noopener">↗ Open</a>
       <button class="ghost" id="close">✕</button>
     </div>
-    <div class="dlg-art"><iframe id="dlgFrame" title="Preview"></iframe></div>
+    <div class="dlg-art" id="dlgArt"></div>
     <pre class="dlg-code" id="dlgCode"></pre>
   </div>
 </dialog>
@@ -154,17 +216,27 @@ function render(coded) {
   grid.innerHTML = '';
   const arrow = () => Object.assign(document.createElement('span'), { className: 'arrow', textContent: '→' });
   for (const line of LINES) {
-    const box = document.createElement('div');
-    box.className = 'line';
+    const box = document.createElement('div'), steps = document.createElement('div');
+    box.className = 'line'; steps.className = 'steps';
     line.forEach((step, k) => {
-      if (k) box.appendChild(arrow());
+      if (k) steps.appendChild(arrow());
       if (Array.isArray(step)) {
         const br = document.createElement('div');
         br.className = 'branch';
         step.forEach(n => br.appendChild(card(n, coded.has(n))));
-        box.appendChild(br);
-      } else box.appendChild(card(step, coded.has(step)));
+        steps.appendChild(br);
+      } else steps.appendChild(card(step, coded.has(step)));
     });
+    box.appendChild(steps);
+    // Linie komplett gecodet → 🧬-Knopf mit allen Stufen nebeneinander
+    const all = line.flat();
+    if (all.length > 1 && all.every(n => coded.has(n))) {
+      const color = TYPE[TYPES[all[0] - 1]][1];
+      const btn = Object.assign(document.createElement('button'), { className: 'evo', textContent: '🧬 Evolution' });
+      btn.style.setProperty('--c', color);
+      btn.onclick = () => openEvo(all, color);
+      box.appendChild(btn);
+    }
     grid.appendChild(box);
   }
   document.getElementById('count').textContent = `${coded.size} / 151 coded`;
@@ -174,15 +246,32 @@ function render(coded) {
 // Klick auf eine Karte: Bild links, Code rechts, „Copy code“
 const dlg = document.getElementById('dlg');
 let codeText = '';
+const dlgArt = document.getElementById('dlgArt'), openBtn = document.getElementById('open');
 async function openCode(n, color) {
   dlg.style.setProperty('--c', color);
   document.getElementById('dlgTitle').innerHTML = `<b>#${pad(n)}</b> ${NAMES[n - 1]}`;
-  document.getElementById('dlgFrame').src = fileOf(n);
-  document.getElementById('open').href = fileOf(n);
+  dlgArt.className = 'dlg-art';
+  dlgArt.innerHTML = `<iframe src="${fileOf(n)}" title="${NAMES[n - 1]}"></iframe>`;
+  openBtn.href = fileOf(n); openBtn.hidden = false;
   document.getElementById('dlgCode').textContent = 'Loading code …';
   dlg.showModal();
   try { codeText = await (await fetch(fileOf(n))).text(); } catch { codeText = ''; }
   document.getElementById('dlgCode').textContent = codeText || 'Could not load the code – use “Open” instead.';
+}
+// 🧬 Entwicklung: alle Stufen nebeneinander, der Code aller Stufen hintereinander
+async function openEvo(nums, color) {
+  dlg.style.setProperty('--c', color);
+  const isBranch = nums.length > 3 && nums[0] === 133;   // Eevee: Eevee → Vaporeon / Jolteon / Flareon
+  document.getElementById('dlgTitle').innerHTML = '🧬 ' + nums.map(n => `<b>${NAMES[n - 1]}</b>`).join(isBranch ? ' · ' : ' → ');
+  dlgArt.className = 'dlg-art row';
+  dlgArt.innerHTML = nums.map((n, k) => (k ? '<span class="arrow">→</span>' : '') +
+    `<iframe src="${fileOf(n)}" title="${NAMES[n - 1]}"></iframe>`).join('');
+  openBtn.hidden = true;
+  document.getElementById('dlgCode').textContent = 'Loading code …';
+  dlg.showModal();
+  const parts = await Promise.all(nums.map(n => fetch(fileOf(n)).then(r => r.text()).catch(() => '')));
+  codeText = parts.map((t, k) => `<!-- ===== #${pad(nums[k])} ${NAMES[nums[k] - 1]} ===== -->\n${t}`).join('\n\n');
+  document.getElementById('dlgCode').textContent = parts.every(Boolean) ? codeText : 'Could not load all stages – try again later.';
 }
 document.getElementById('copy').onclick = async e => {
   try { await navigator.clipboard.writeText(codeText); e.target.textContent = '✅ Copied'; }
@@ -191,7 +280,33 @@ document.getElementById('copy').onclick = async e => {
 };
 document.getElementById('close').onclick = () => dlg.close();
 dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
-dlg.addEventListener('close', () => { document.getElementById('dlgFrame').src = 'about:blank'; });
+dlg.addEventListener('close', () => { dlgArt.innerHTML = ''; });
+
+// Dino: 16 × 16 Pixel als box-shadow – derselbe wie im Profilbild
+const DINO = ['................','........dddddd..','.......dggggggd.','.......dgwkggggd','.......dgggggggd','......pdggggdddd',
+  '.....pdggggd....','....pdgggggdd...','..ppdgggggggld..','.pdggggggllld...','dgggggggglld....','dd..dggggld.....',
+  '....dggdggd.....','....dgd.dgd.....','....dgd.dgd.....','...ddd..ddd.....'];
+const DC = { d: '#14532d', g: '#4ade80', l: '#bbf7d0', w: '#ffffff', k: '#0a0a10', p: '#f9a8d4' };
+document.querySelector('#dino i').style.boxShadow = DINO.flatMap((row, y) =>
+  [...row].map((ch, x) => ch === '.' ? null : `${(x + 1) * 6}px ${(y + 1) * 6}px ${DC[ch]}`)).filter(Boolean).join(',');
+
+// Untertitel wird wie Code getippt: .pokemon { pixels: css; images: none; }
+const TYPED = [['k', '.pokemon'], ['', ' { '], ['', 'pixels: '], ['s', '100% css'], ['', '; '], ['', 'images: '], ['s', 'none'], ['', '; }']];
+(function typeIt() {
+  const el = document.getElementById('typed');
+  const full = TYPED.map(([, t]) => t).join('');
+  let i = 0;
+  const step = () => {
+    let left = i, html = '';
+    for (const [cls, t] of TYPED) {
+      const part = t.slice(0, Math.max(0, left)); left -= t.length;
+      if (part) html += cls ? `<span class="${cls}">${part}</span>` : part;
+    }
+    el.innerHTML = html + '<span class="cur"></span>';
+    if (i++ < full.length) setTimeout(step, 45 + Math.random() * 60);
+  };
+  setTimeout(step, 500);
+})();
 
 render(new Set());
 codedSet().then(render).catch(() => { document.getElementById('count').textContent = 'Could not load the list – try again later.'; });

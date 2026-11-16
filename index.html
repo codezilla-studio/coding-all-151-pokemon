@@ -1,39 +1,87 @@
 <!doctype html>
-<!-- @codezilla.studio – Galerie: listet automatisch alle Pokémon-Dateien im Repo -->
+<!-- @codezilla.studio – Galerie: liest die Dateiliste des Repos und zeigt alle 151 Pokémon, gruppiert nach Entwicklungslinien -->
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Coding all 151 Pokémon – Codezilla</title>
 <style>
-  :root { --bg: #0a0a10; --mid: #2a1640; --green: #4ade80; --pink: #f9a8d4; --text: #fff; --muted: #a8a8c0; }
+  :root { --bg: #0a0a10; --mid: #2a1640; --green: #4ade80; --pink: #f9a8d4; --text: #fff; --muted: #a8a8c0; --line: #2e2e48; }
   * { box-sizing: border-box; }
   body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; color: var(--text);
          background: radial-gradient(circle at 50% 0, var(--mid), var(--bg) 70%) fixed; }
-  header { text-align: center; padding: 48px 16px 24px; }
+  header { text-align: center; padding: 48px 16px 28px; }
   h1 { margin: 0; font-size: clamp(28px, 6vw, 48px); }
   h1 span { color: var(--green); }
   header p { margin: 8px 0 0; color: var(--pink); font-weight: 600; }
-  .count { color: var(--muted); font-size: 14px; margin-top: 12px; }
-  main { max-width: 1100px; margin: 0 auto; padding: 0 16px 48px;
-         display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
-  a.card { display: block; text-decoration: none; color: inherit; background: #111118; border: 2px solid #2e2e48;
-           border-radius: 14px; overflow: hidden; transition: border-color .2s, transform .2s; }
-  a.card:hover { border-color: var(--green); transform: translateY(-3px); }
+  .progress { width: min(420px, 90%); margin: 18px auto 0; }
+  .bar { height: 10px; border-radius: 99px; background: #1b1b2a; overflow: hidden; border: 1px solid var(--line); }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--green), #22c55e); transition: width .8s; }
+  .count { color: var(--muted); font-size: 14px; margin-top: 8px; }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 0 16px 48px; display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+  /* Eine Entwicklungslinie = ein Kasten mit Karten und Pfeilen */
+  .line { display: flex; align-items: center; gap: 6px; padding: 10px; border-radius: 18px;
+          background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
+  .branch { display: flex; flex-direction: column; gap: 8px; }
+  .arrow { color: var(--muted); font-size: 22px; font-weight: 800; padding: 0 2px; }
+
+  .card { --c: var(--line); width: 148px; display: block; text-decoration: none; color: inherit; background: #111118;
+          border: 2px solid color-mix(in srgb, var(--c) 55%, #2e2e48); border-radius: 14px; overflow: hidden;
+          transition: border-color .2s, transform .2s, box-shadow .2s; cursor: pointer; font: inherit; padding: 0; text-align: left; }
+  .card:hover { border-color: var(--c); transform: translateY(-3px); box-shadow: 0 6px 24px color-mix(in srgb, var(--c) 30%, transparent); }
   .frame { aspect-ratio: 1; background: #111; overflow: hidden; position: relative; }
   .frame iframe { position: absolute; inset: 0; width: 400%; height: 400%; border: 0;
                   transform: scale(.25); transform-origin: 0 0; pointer-events: none; }
-  .name { padding: 10px 12px; font-weight: 700; font-size: 14px; }
-  .name b { color: var(--green); margin-right: 6px; }
-  .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); }
+  .name { padding: 8px 10px; font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .name b { color: var(--c); margin-right: 5px; }
+  .type { display: block; font-size: 11px; font-weight: 600; color: color-mix(in srgb, var(--c) 80%, #fff); opacity: .8; margin-top: 2px; }
+  /* Noch nicht gecodet: graue ???-Karte */
+  .card.todo { cursor: default; border-color: #23232f; }
+  .card.todo:hover { transform: none; box-shadow: none; border-color: #23232f; }
+  .card.todo .frame { display: grid; place-items: center; color: #3a3a4e; font-size: 40px; font-weight: 900; }
+  .card.todo .name { color: #55556a; }
+  .card.todo .name b { color: #55556a; }
+
+  /* Code-Ansicht: Bild und Code nebeneinander */
+  dialog { width: min(1100px, 96vw); height: min(760px, 92vh); padding: 0; border: 2px solid var(--c, var(--green));
+           border-radius: 18px; background: #0d0d14; color: var(--text); overflow: hidden; }
+  dialog::backdrop { background: rgba(5,5,10,.8); backdrop-filter: blur(4px); }
+  .dlg { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; height: 100%; }
+  .dlg-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  .dlg-head h2 { margin: 0; font-size: 18px; flex: 1; }
+  .dlg-head h2 b { color: var(--c); }
+  .dlg-head button, .dlg-head a { font: 600 13px system-ui; color: #0a0a10; background: var(--c, var(--green)); border: 0;
+           border-radius: 9px; padding: 8px 12px; cursor: pointer; text-decoration: none; }
+  .dlg-head .ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .dlg-art { position: relative; background: #111; border-right: 1px solid var(--line); }
+  .dlg-art iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .dlg-code { margin: 0; overflow: auto; padding: 14px 16px; font: 12px/1.5 ui-monospace, Consolas, monospace; color: #c9c9e0; white-space: pre; }
+  @media (max-width: 760px) {
+    .dlg { grid-template-columns: 1fr; grid-template-rows: auto 45% 1fr; }
+    .dlg-art { border-right: 0; border-bottom: 1px solid var(--line); }
+    .card { width: 110px; }
+  }
   footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 16px 32px; }
   footer a { color: var(--green); }
 </style>
 <header>
   <h1>🦖 Coding all <span>151</span> Pokémon</h1>
   <p>Every pixel is pure CSS – no images</p>
-  <div class="count" id="count">Loading …</div>
+  <div class="progress"><div class="bar"><i id="bar"></i></div><div class="count" id="count">Loading …</div></div>
 </header>
 <main id="grid"></main>
+<dialog id="dlg">
+  <div class="dlg">
+    <div class="dlg-head">
+      <h2 id="dlgTitle"></h2>
+      <button id="copy">📋 Copy code</button>
+      <a id="open" target="_blank" rel="noopener">↗ Open</a>
+      <button class="ghost" id="close">✕</button>
+    </div>
+    <div class="dlg-art"><iframe id="dlgFrame" title="Preview"></iframe></div>
+    <pre class="dlg-code" id="dlgCode"></pre>
+  </div>
+</dialog>
 <footer>
   Watch them being coded:
   <a href="https://www.youtube.com/@codezilla.studio">YouTube</a> ·
@@ -42,24 +90,110 @@
   Fan art – Pokémon © Nintendo / Game Freak / Creatures. Not affiliated.
 </footer>
 <script>
-  // Liest die Dateiliste des Repos und zeigt jede Datei „001-bulbasaur.html“ als Karte mit Vorschau
-  const grid = document.getElementById('grid'), count = document.getElementById('count');
-  const title = s => s.replace(/(^|-)\w/g, c => c.toUpperCase()).replace(/-/g, ' ');
-  fetch('https://api.github.com/repos/codezilla-studio/coding-all-151-pokemon/contents/')
-    .then(r => r.json())
-    .then(files => {
-      const items = files.map(f => f.name.match(/^(\d{3})-([a-z0-9-]+)\.html$/)).filter(Boolean)
-        .sort((a, b) => a[1] - b[1]);
-      count.textContent = `${items.length} / 151 coded`;
-      if (!items.length) grid.innerHTML = '<p class="empty">The first Pokémon are on their way …</p>';
-      for (const [file, nr, slug] of items) {
-        const a = document.createElement('a');
-        a.className = 'card'; a.href = file;
-        a.innerHTML = `<div class="frame"><iframe src="${file}" loading="lazy" tabindex="-1" title="${title(slug)}"></iframe></div>
-          <div class="name"><b>#${nr}</b>${title(slug)}</div>`;
-        grid.appendChild(a);
-      }
-    })
-    .catch(() => { count.textContent = ''; grid.innerHTML = '<p class="empty">Could not load the list – try again later.</p>'; });
+const REPO = 'codezilla-studio/coding-all-151-pokemon';
+const NAMES = ['Bulbasaur','Ivysaur','Venusaur','Charmander','Charmeleon','Charizard','Squirtle','Wartortle','Blastoise','Caterpie',
+  'Metapod','Butterfree','Weedle','Kakuna','Beedrill','Pidgey','Pidgeotto','Pidgeot','Rattata','Raticate','Spearow','Fearow','Ekans','Arbok',
+  'Pikachu','Raichu','Sandshrew','Sandslash','Nidoran♀','Nidorina','Nidoqueen','Nidoran♂','Nidorino','Nidoking','Clefairy','Clefable',
+  'Vulpix','Ninetales','Jigglypuff','Wigglytuff','Zubat','Golbat','Oddish','Gloom','Vileplume','Paras','Parasect','Venonat','Venomoth',
+  'Diglett','Dugtrio','Meowth','Persian','Psyduck','Golduck','Mankey','Primeape','Growlithe','Arcanine','Poliwag','Poliwhirl','Poliwrath',
+  'Abra','Kadabra','Alakazam','Machop','Machoke','Machamp','Bellsprout','Weepinbell','Victreebel','Tentacool','Tentacruel','Geodude',
+  'Graveler','Golem','Ponyta','Rapidash','Slowpoke','Slowbro','Magnemite','Magneton',"Farfetch'd",'Doduo','Dodrio','Seel','Dewgong',
+  'Grimer','Muk','Shellder','Cloyster','Gastly','Haunter','Gengar','Onix','Drowzee','Hypno','Krabby','Kingler','Voltorb','Electrode',
+  'Exeggcute','Exeggutor','Cubone','Marowak','Hitmonlee','Hitmonchan','Lickitung','Koffing','Weezing','Rhyhorn','Rhydon','Chansey',
+  'Tangela','Kangaskhan','Horsea','Seadra','Goldeen','Seaking','Staryu','Starmie','Mr. Mime','Scyther','Jynx','Electabuzz','Magmar',
+  'Pinsir','Tauros','Magikarp','Gyarados','Lapras','Ditto','Eevee','Vaporeon','Jolteon','Flareon','Porygon','Omanyte','Omastar',
+  'Kabuto','Kabutops','Aerodactyl','Snorlax','Articuno','Zapdos','Moltres','Dratini','Dragonair','Dragonite','Mewtwo','Mew'];
+// Typ je Pokémon (wie im Video-Tool) und Farbe/Name je Typ
+const TYPES = ['GGGFFFWWWB','BBBBBNNNNN','NNPPEEDDPP','PPPPYYFFNN','PPGGGBBBBD','DNNWWKKFFW','WWSSSKKKGG','GWWRRRFFWW',
+  'EENNNWWPPW','WHHHRSSWWE','EGGDDKKNPP','DDNGNWWWWW','WSBIEFBNWW','WNNWEFNRRR','RRNIEFAAAS','S'].join('');
+const TYPE = {
+  G: ['Grass', '#86efac'], F: ['Fire', '#fdba74'], W: ['Water', '#93c5fd'], E: ['Electric', '#fde047'], B: ['Bug', '#bef264'],
+  N: ['Normal', '#e5e7eb'], P: ['Poison', '#d8b4fe'], D: ['Ground', '#e7c9a0'], Y: ['Fairy', '#f9a8d4'], K: ['Fighting', '#fca5a5'],
+  S: ['Psychic', '#f0abfc'], R: ['Rock', '#d6d3d1'], H: ['Ghost', '#c4b5fd'], I: ['Ice', '#bae6fd'], A: ['Dragon', '#a5b4fc'],
+};
+// Entwicklungslinien – ein Array im Array = Verzweigung (Eevee)
+const LINES = [[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,15],[16,17,18],[19,20],[21,22],[23,24],[25,26],[27,28],[29,30,31],
+  [32,33,34],[35,36],[37,38],[39,40],[41,42],[43,44,45],[46,47],[48,49],[50,51],[52,53],[54,55],[56,57],[58,59],[60,61,62],
+  [63,64,65],[66,67,68],[69,70,71],[72,73],[74,75,76],[77,78],[79,80],[81,82],[83],[84,85],[86,87],[88,89],[90,91],[92,93,94],
+  [95],[96,97],[98,99],[100,101],[102,103],[104,105],[106],[107],[108],[109,110],[111,112],[113],[114],[115],[116,117],[118,119],
+  [120,121],[122],[123],[124],[125],[126],[127],[128],[129,130],[131],[132],[133,[134,135,136]],[137],[138,139],[140,141],[142],
+  [143],[144],[145],[146],[147,148,149],[150],[151]];
+
+const pad = n => String(n).padStart(3, '0');
+const slug = n => NAMES[n - 1].toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '');
+const fileOf = n => `${pad(n)}-${slug(n)}.html`;
+const grid = document.getElementById('grid');
+
+// Welche Dateien liegen im Repo? Erst über die GitHub-API, sonst jede Datei einzeln anfragen
+async function codedSet() {
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/`);
+    if (!r.ok) throw 0;
+    const names = new Set((await r.json()).map(f => f.name));
+    return new Set(NAMES.map((_, k) => k + 1).filter(n => names.has(fileOf(n))));
+  } catch {
+    const hits = await Promise.all(NAMES.map((_, k) => fetch(fileOf(k + 1), { method: 'HEAD' }).then(r => r.ok && k + 1).catch(() => 0)));
+    return new Set(hits.filter(Boolean));
+  }
+}
+
+function card(n, coded) {
+  const [typeName, color] = TYPE[TYPES[n - 1]];
+  const el = document.createElement(coded ? 'button' : 'div');
+  el.className = 'card' + (coded ? '' : ' todo');
+  el.style.setProperty('--c', color);
+  el.innerHTML = coded
+    ? `<div class="frame"><iframe src="${fileOf(n)}" loading="lazy" tabindex="-1" title="${NAMES[n - 1]}"></iframe></div>
+       <div class="name"><b>#${pad(n)}</b>${NAMES[n - 1]}<span class="type">${typeName}</span></div>`
+    : `<div class="frame">?</div><div class="name"><b>#${pad(n)}</b>???<span class="type">&nbsp;</span></div>`;
+  if (coded) el.onclick = () => openCode(n, color);
+  return el;
+}
+
+function render(coded) {
+  grid.innerHTML = '';
+  const arrow = () => Object.assign(document.createElement('span'), { className: 'arrow', textContent: '→' });
+  for (const line of LINES) {
+    const box = document.createElement('div');
+    box.className = 'line';
+    line.forEach((step, k) => {
+      if (k) box.appendChild(arrow());
+      if (Array.isArray(step)) {
+        const br = document.createElement('div');
+        br.className = 'branch';
+        step.forEach(n => br.appendChild(card(n, coded.has(n))));
+        box.appendChild(br);
+      } else box.appendChild(card(step, coded.has(step)));
+    });
+    grid.appendChild(box);
+  }
+  document.getElementById('count').textContent = `${coded.size} / 151 coded`;
+  requestAnimationFrame(() => { document.getElementById('bar').style.width = `${coded.size / 151 * 100}%`; });
+}
+
+// Klick auf eine Karte: Bild links, Code rechts, „Copy code“
+const dlg = document.getElementById('dlg');
+let codeText = '';
+async function openCode(n, color) {
+  dlg.style.setProperty('--c', color);
+  document.getElementById('dlgTitle').innerHTML = `<b>#${pad(n)}</b> ${NAMES[n - 1]}`;
+  document.getElementById('dlgFrame').src = fileOf(n);
+  document.getElementById('open').href = fileOf(n);
+  document.getElementById('dlgCode').textContent = 'Loading code …';
+  dlg.showModal();
+  try { codeText = await (await fetch(fileOf(n))).text(); } catch { codeText = ''; }
+  document.getElementById('dlgCode').textContent = codeText || 'Could not load the code – use “Open” instead.';
+}
+document.getElementById('copy').onclick = async e => {
+  try { await navigator.clipboard.writeText(codeText); e.target.textContent = '✅ Copied'; }
+  catch { e.target.textContent = '❌ Copy failed'; }
+  setTimeout(() => { e.target.textContent = '📋 Copy code'; }, 1500);
+};
+document.getElementById('close').onclick = () => dlg.close();
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+dlg.addEventListener('close', () => { document.getElementById('dlgFrame').src = 'about:blank'; });
+
+render(new Set());
+codedSet().then(render).catch(() => { document.getElementById('count').textContent = 'Could not load the list – try again later.'; });
 </script>
 </html>

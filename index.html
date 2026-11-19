@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- @codezilla.studio – Galerie: liest die Dateiliste des Repos und zeigt alle 151 Pokémon, gruppiert nach Entwicklungslinien -->
+<!-- @codezilla.studio – Galerie: liest die Dateiliste des Repos und zeigt alle 151 Pokémon auf EINER Seite ohne Scrollen -->
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,115 +7,121 @@
 <style>
   :root { --bg: #0a0a10; --mid: #2a1640; --green: #4ade80; --pink: #f9a8d4; --text: #fff; --muted: #a8a8c0; --line: #2e2e48; }
   * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; color: var(--text);
+  html, body { height: 100%; }
+  /* Ganze Seite = genau ein Bildschirm: Kopf · Raster (füllt den Rest) · Fußzeile – Schrift wie im Video (Code-Schrift) */
+  body { margin: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+         font-family: "JetBrains Mono", Consolas, ui-monospace, monospace; color: var(--text);
          background: radial-gradient(circle at 50% 0, var(--mid), var(--bg) 70%) fixed; }
-  header { text-align: center; padding: 44px 16px 28px; position: relative; }
-  /* feines Pixel-Raster im Hintergrund, nach unten ausgeblendet */
-  header::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background-image: linear-gradient(rgba(74,222,128,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(74,222,128,.06) 1px, transparent 1px);
-    background-size: 24px 24px; mask-image: linear-gradient(#000, transparent 85%); -webkit-mask-image: linear-gradient(#000, transparent 85%); }
-  .hero { display: flex; align-items: center; justify-content: center; gap: clamp(14px, 3vw, 28px); flex-wrap: wrap; }
-  /* Der Dino – selbst aus CSS-Pixeln (box-shadow), wie alles hier */
-  .dino { width: 96px; height: 96px; position: relative; animation: bob 2.4s ease-in-out infinite;
-          filter: drop-shadow(0 0 18px rgba(74,222,128,.45)); }
-  .dino i { position: absolute; left: -6px; top: -6px; width: 6px; height: 6px; }
-  @keyframes bob { 50% { transform: translateY(-6px); } }
-  h1 { margin: 0; font-size: clamp(30px, 6.5vw, 58px); font-weight: 900; line-height: 1.05; letter-spacing: -.02em; text-align: left; }
-  h1 small { display: block; font-size: .42em; font-weight: 700; letter-spacing: .28em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+  body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image: linear-gradient(rgba(74,222,128,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(74,222,128,.05) 1px, transparent 1px);
+    background-size: 24px 24px; mask-image: linear-gradient(#000, transparent 60%); -webkit-mask-image: linear-gradient(#000, transparent 60%); }
+
+  /* Kopf in einer Zeile: Dino · Titel · getippter Code · Fortschritt · Kanäle */
+  header { flex: none; display: flex; align-items: center; gap: 14px 22px; flex-wrap: wrap; justify-content: center; padding: 14px 18px 10px; }
+  .hero { display: flex; align-items: center; gap: 12px; }
+  .dino { width: 48px; height: 48px; position: relative; flex: none; animation: bob 2.4s ease-in-out infinite;
+          filter: drop-shadow(0 0 12px rgba(74,222,128,.45)); }
+  .dino i { position: absolute; left: -3px; top: -3px; width: 3px; height: 3px; }
+  @keyframes bob { 50% { transform: translateY(-4px); } }
+  /* Titel wie der Name im Video-Opening: dick, Großbuchstaben, leuchtend */
+  h1 { margin: 0; font: 900 26px/1 system-ui, "Segoe UI Black", sans-serif; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap;
+       text-shadow: 0 0 18px rgba(255,255,255,.18); }
+  h1 small { display: block; font: 700 10px "JetBrains Mono", Consolas, ui-monospace, monospace; text-shadow: none; letter-spacing: .28em; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
   h1 .num { background: linear-gradient(180deg, #bbf7d0, var(--green) 55%, #16a34a); -webkit-background-clip: text; background-clip: text;
-            color: transparent; filter: drop-shadow(0 0 14px rgba(74,222,128,.55)); }
-  /* Code-Fenster wie im Video – der Untertitel wird getippt */
-  .term { display: inline-flex; align-items: center; gap: 10px; margin-top: 22px; padding: 10px 16px; border-radius: 12px;
-          background: #0d0d14; border: 1px solid var(--line); font: 14px/1.4 ui-monospace, Consolas, monospace; max-width: 100%; }
+            color: transparent; filter: drop-shadow(0 0 10px rgba(74,222,128,.55)); }
+  .term { display: inline-flex; align-items: center; gap: 9px; padding: 8px 13px; border-radius: 10px;
+          background: #0d0d14; border: 1px solid var(--line); font: 13px/1.4 "JetBrains Mono", Consolas, ui-monospace, monospace; }
   .term .dots { display: flex; gap: 5px; flex: none; }
-  .term .dots i { width: 9px; height: 9px; border-radius: 50%; }
-  .term code { color: #c9c9e0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .term .k { color: var(--pink); } .term .s { color: var(--green); } .term .c { color: #6b6b85; }
-  .term .cur { display: inline-block; width: 8px; height: 1.1em; background: var(--green); vertical-align: -2px; margin-left: 1px;
+  .term .dots i { width: 8px; height: 8px; border-radius: 50%; }
+  .term code { color: #c9c9e0; white-space: nowrap; min-width: 33ch; }
+  .term .k { color: var(--pink); } .term .s { color: var(--green); }
+  .term .cur { display: inline-block; width: 7px; height: 1.1em; background: var(--green); vertical-align: -2px; margin-left: 1px;
                animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
-  @media (max-width: 560px) {
-    h1 { text-align: center; }
-    .term { font-size: 12px; } .term code { white-space: normal; }
-    /* drei Karten + Pfeile passen nebeneinander aufs Handy */
-    main { padding: 0 8px 40px; gap: 10px; }
-    .line { padding: 6px; border-radius: 14px; } .steps { gap: 2px; }
-    .arrow { font-size: 15px; padding: 0; }
-    .card { width: calc((100vw - 76px) / 3) !important; max-width: 120px; border-radius: 11px; }
-    .name { font-size: 11px; padding: 6px 7px; }
-    .type { font-size: 10px; }
-  }
-  .progress { width: min(420px, 90%); margin: 18px auto 0; }
-  .bar { height: 10px; border-radius: 99px; background: #1b1b2a; overflow: hidden; border: 1px solid var(--line); }
+  .progress { width: 170px; }
+  .bar { height: 8px; border-radius: 99px; background: #1b1b2a; overflow: hidden; border: 1px solid var(--line); }
   .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--green), #22c55e); transition: width .8s; }
-  .count { color: var(--muted); font-size: 14px; margin-top: 8px; }
-  .socials { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 20px; }
-  .socials a { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 99px; text-decoration: none;
-               color: var(--text); font: 600 14px system-ui; background: rgba(255,255,255,.05); border: 1px solid var(--line);
+  .count { color: var(--muted); font-size: 12px; margin-top: 5px; text-align: center; }
+  header { justify-content: space-between; }
+  /* Unter 1700 px nur die runden Symbole, damit alles in eine Zeile passt */
+  @media (max-width: 1700px) {
+    header .socials a { width: 36px; height: 36px; padding: 0; justify-content: center; font-size: 0; gap: 0; }
+  }
+  .socials { display: flex; gap: 8px; }   /* ganz rechts in der Kopfzeile */
+  .socials a { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 99px; text-decoration: none;
+               color: var(--text); font: 600 13px "JetBrains Mono", Consolas, ui-monospace, monospace; background: rgba(255,255,255,.05); border: 1px solid var(--line);
                transition: border-color .2s, background .2s, transform .2s; }
   .socials a:hover { border-color: var(--green); background: rgba(74,222,128,.08); transform: translateY(-2px); }
-  .socials svg { width: 18px; height: 18px; fill: currentColor; }
-  .socials .yt svg { color: #ff4e45; } .socials .ig svg { color: #f472b6; }
+  .socials svg { width: 16px; height: 16px; fill: currentColor; }
+  .socials .yt svg { color: #ff4e45; } .socials .ig svg { color: #f472b6; } .socials .fb svg { color: #1877f2; }
 
-  main { max-width: 1200px; margin: 0 auto; padding: 0 16px 48px; display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
-  /* Eine Entwicklungslinie = ein Kasten mit Karten und Pfeilen */
-  .line { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; border-radius: 18px;
-          background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
-  .steps { display: flex; align-items: center; gap: 6px; }
-  /* 🧬-Knopf unter einer fertigen Entwicklungslinie */
-  .evo { font: 700 12px system-ui; color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent);
-         border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); border-radius: 99px; padding: 6px 14px; cursor: pointer;
-         transition: background .2s, transform .2s; }
-  .evo:hover { background: color-mix(in srgb, var(--c) 25%, transparent); transform: translateY(-1px); }
-  .dlg-art.row { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 10px; }
-  .dlg-art.row iframe { position: static; flex: 1; min-width: 0; height: 70%; }
-  .dlg-art.row .arrow { flex: none; color: var(--c); }
-  .branch { display: flex; flex-direction: column; gap: 8px; }
-  .arrow { color: var(--muted); font-size: 22px; font-weight: 800; padding: 0 2px; }
+  /* Raster: füllt den restlichen Platz, Kachelgröße rechnet das Script aus (--s) */
+  main { flex: 1; min-height: 0; padding: 4px 14px; display: grid; place-items: center; }
+  #grid { display: grid; gap: var(--g, 4px); grid-template-columns: repeat(var(--cols, 17), var(--s, 60px)); }
+  .card { --c: var(--line); position: relative; width: var(--s); height: var(--s); padding: 0; overflow: hidden; cursor: pointer;
+          background: #111118; border: 2px solid color-mix(in srgb, var(--c) 55%, #2e2e48); border-radius: calc(var(--s) * .14);
+          transition: border-color .2s, transform .2s, box-shadow .2s; }
+  .card:hover, .card:focus-visible { z-index: 2; border-color: var(--c); transform: scale(1.12); outline: none;
+          box-shadow: 0 6px 20px color-mix(in srgb, var(--c) 40%, transparent); }
+  /* Vorschau: echte Seite in 600 px, auf Kachelgröße verkleinert */
+  .card iframe { position: absolute; left: 0; top: 0; width: 600px; height: 600px; border: 0; pointer-events: none;
+                 transform: scale(var(--k, .1)); transform-origin: 0 0; }
+  .card .nr { position: absolute; left: 3px; bottom: 2px; font: 800 max(8px, calc(var(--s) * .15)) "JetBrains Mono", Consolas, ui-monospace, monospace;
+              color: var(--c); text-shadow: 0 0 3px #000, 0 0 3px #000; pointer-events: none; }
+  /* Noch nicht gecodet: graue Kachel mit Nummer */
+  .card.todo { cursor: default; border-color: #1f1f2b; background: rgba(17,17,24,.6); }
+  .card.todo:hover { transform: none; box-shadow: none; border-color: #1f1f2b; }
+  .card.todo .nr { inset: 0; display: grid; place-items: center; color: #3a3a4e; text-shadow: none; }
+  /* Name beim Drüberfahren */
+  #tip { position: fixed; z-index: 20; pointer-events: none; display: none; padding: 5px 9px; border-radius: 8px; white-space: nowrap;
+         background: #1b1b26; border: 1px solid var(--c, var(--line)); font: 600 12px "JetBrains Mono", Consolas, ui-monospace, monospace; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
+  #tip b { color: var(--c); margin-right: 4px; } #tip span { color: var(--muted); font-weight: 500; margin-left: 6px; }
 
-  .card { --c: var(--line); width: 148px; display: block; text-decoration: none; color: inherit; background: #111118;
-          border: 2px solid color-mix(in srgb, var(--c) 55%, #2e2e48); border-radius: 14px; overflow: hidden;
-          transition: border-color .2s, transform .2s, box-shadow .2s; cursor: pointer; font: inherit; padding: 0; text-align: left; }
-  .card:hover { border-color: var(--c); transform: translateY(-3px); box-shadow: 0 6px 24px color-mix(in srgb, var(--c) 30%, transparent); }
-  .frame { aspect-ratio: 1; background: #111; overflow: hidden; position: relative; }
-  .frame iframe { position: absolute; inset: 0; width: 400%; height: 400%; border: 0;
-                  transform: scale(.25); transform-origin: 0 0; pointer-events: none; }
-  .name { padding: 8px 10px; font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .name b { color: var(--c); margin-right: 5px; }
-  .type { display: block; font-size: 11px; font-weight: 600; color: color-mix(in srgb, var(--c) 80%, #fff); opacity: .8; margin-top: 2px; }
-  /* Noch nicht gecodet: graue ???-Karte */
-  .card.todo { cursor: default; border-color: #23232f; }
-  .card.todo:hover { transform: none; box-shadow: none; border-color: #23232f; }
-  .card.todo .frame { display: grid; place-items: center; color: #3a3a4e; font-size: 40px; font-weight: 900; }
-  .card.todo .name { color: #55556a; }
-  .card.todo .name b { color: #55556a; }
+  footer { flex: none; text-align: center; color: #6b6b85; font-size: 11px; padding: 6px 16px 10px; }
 
   /* Code-Ansicht: Bild und Code nebeneinander */
   dialog { width: min(1100px, 96vw); height: min(760px, 92vh); padding: 0; border: 2px solid var(--c, var(--green));
            border-radius: 18px; background: #0d0d14; color: var(--text); overflow: hidden; }
   dialog::backdrop { background: rgba(5,5,10,.8); backdrop-filter: blur(4px); }
   .dlg { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; height: 100%; }
-  .dlg-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
-  .dlg-head h2 { margin: 0; font-size: 18px; flex: 1; }
+  .dlg-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .dlg-head h2 { margin: 0; font-size: 18px; min-width: 0; }
+  /* YouTube / TikTok / Instagram direkt neben dem Namen */
+  .dlg-social { display: flex; gap: 6px; flex: 1; }
+  .dlg-head .dlg-social a { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border-radius: 50%;
+           background: rgba(255,255,255,.06); border: 1px solid var(--line); transition: border-color .2s, transform .2s; }
+  .dlg-head .dlg-social a:hover { border-color: var(--c); transform: translateY(-2px); }
+  .dlg-social svg { width: 16px; height: 16px; fill: #fff; }
+  .dlg-social .yt svg { fill: #ff4e45; } .dlg-social .ig svg { fill: #f472b6; } .dlg-social .fb svg { fill: #1877f2; }
   .dlg-head h2 b { color: var(--c); }
-  .dlg-head button, .dlg-head a { font: 600 13px system-ui; color: #0a0a10; background: var(--c, var(--green)); border: 0;
+  .dlg-head button, .dlg-head a { font: 600 13px "JetBrains Mono", Consolas, ui-monospace, monospace; color: #0a0a10; background: var(--c, var(--green)); border: 0;
            border-radius: 9px; padding: 8px 12px; cursor: pointer; text-decoration: none; }
   .dlg-head .ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+  .dlg-head .evo { background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); }
   .dlg-art { position: relative; background: #111; border-right: 1px solid var(--line); }
   .dlg-art iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-  .dlg-code { margin: 0; overflow: auto; padding: 14px 16px; font: 12px/1.5 ui-monospace, Consolas, monospace; color: #c9c9e0; white-space: pre; }
+  .dlg-art.row { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 10px; }
+  .dlg-art.row iframe { position: static; flex: 1; min-width: 0; height: 70%; }
+  .dlg-art.row .arrow { flex: none; color: var(--c); font-size: 22px; font-weight: 800; }
+  .dlg-code { margin: 0; overflow: auto; padding: 14px 16px; font: 12px/1.5 "JetBrains Mono", Consolas, ui-monospace, monospace; color: #c9c9e0; white-space: pre; }
+
+  @media (max-width: 1100px) { .term { display: none; } }
   @media (max-width: 760px) {
+    header { gap: 8px 12px; padding: 10px 10px 6px; justify-content: center; }
+    h1 { font-size: 20px; } h1 small { font-size: 8px; margin-bottom: 3px; }
+    .dino { width: 32px; height: 32px; } .dino i { left: -2px; top: -2px; width: 2px; height: 2px; }
+    .progress { width: 110px; } .count { font-size: 10px; margin-top: 3px; }
+    .socials a { padding: 6px 9px; font-size: 0; gap: 0; } .socials svg { width: 15px; height: 15px; }
+    main { padding: 2px 6px; }
+    footer { font-size: 9px; padding: 4px 8px 6px; }
     .dlg { grid-template-columns: 1fr; grid-template-rows: auto 45% 1fr; }
     .dlg-art { border-right: 0; border-bottom: 1px solid var(--line); }
-    .card { width: 110px; }
   }
-  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 16px 32px; }
-  footer a { color: var(--green); }
 </style>
 <header>
   <div class="hero">
     <div class="dino" id="dino" role="img" aria-label="Codezilla dino"><i></i></div>
-    <h1><small>Codezilla presents</small>Coding all <span class="num">151</span><br>Pokémon</h1>
+    <h1><small>Codezilla presents</small>Coding all <span class="num">151</span> Pokémon</h1>
   </div>
   <div class="term" aria-label="Every pixel is pure CSS – no images">
     <span class="dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></span>
@@ -123,19 +129,24 @@
   </div>
   <div class="progress"><div class="bar"><i id="bar"></i></div><div class="count" id="count">Loading …</div></div>
   <nav class="socials" aria-label="Watch them being coded">
-    <a class="yt" href="https://www.youtube.com/@codezilla.studio" target="_blank" rel="noopener">
+    <a class="yt" href="https://www.youtube.com/@codezilla.studio" target="_blank" rel="noopener" title="YouTube">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>YouTube</a>
-    <a class="tt" href="https://www.tiktok.com/@codezilla.studio" target="_blank" rel="noopener">
+    <a class="tt" href="https://www.tiktok.com/@codezilla.studio" target="_blank" rel="noopener" title="TikTok">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 6.7a4.8 4.8 0 0 1-3.8-4.3V2h-3.4v13.7a2.9 2.9 0 1 1-2-2.8V9.4a6.3 6.3 0 1 0 5.4 6.3V8.8a8.2 8.2 0 0 0 4.8 1.5V6.9a4.8 4.8 0 0 1-1-.2z"/></svg>TikTok</a>
-    <a class="ig" href="https://www.instagram.com/codezilla.studio" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-3.3-.1-4.8-1.7-4.9-4.9C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8C2.4 3.9 3.9 2.4 7.2 2.3c1.2-.1 1.6-.1 4.8-.1zM12 0C8.7 0 8.3 0 7.1.1 2.7.3.3 2.7.1 7.1 0 8.3 0 8.7 0 12s0 3.7.1 4.9c.2 4.4 2.6 6.8 7 7 1.2.1 1.6.1 4.9.1s3.7 0 4.9-.1c4.4-.2 6.8-2.6 7-7 .1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9c-.2-4.4-2.6-6.8-7-7C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.8a1.4 1.4 0 1 0 0 2.9 1.4 1.4 0 0 0 0-2.9z"/></svg>Instagram</a>
+    <a class="ig" href="https://www.instagram.com/codezilla.studio" target="_blank" rel="noopener" title="Instagram">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-3.3-.1-4.8-1.7-4.9-4.9C2.2 15.6 2.2 15.200 2.2 12s0-3.6.1-4.8C2.4 3.9 3.9 2.4 7.2 2.3c1.2-.1 1.6-.1 4.8-.1zM12 0C8.7 0 8.3 0 7.1.1 2.7.3.3 2.7.1 7.1 0 8.3 0 8.7 0 12s0 3.7.1 4.9c.2 4.4 2.6 6.8 7 7 1.200.1 1.6.1 4.9.1s3.7 0 4.9-.1c4.4-.2 6.8-2.6 7-7 .1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9c-.2-4.4-2.6-6.8-7-7C15.7 0 15.3 0 12 0zm0 5.8a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.8a1.4 1.4 0 1 0 0 2.9 1.4 1.4 0 0 0 0-2.9z"/></svg>Instagram</a>
+    <a class="fb" href="https://www.facebook.com/codezilla.studio.art" target="_blank" rel="noopener" title="Facebook">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.49h-2.8V24C19.62 23.1 24 18.1 24 12.07z"/></svg>Facebook</a>
   </nav>
 </header>
-<main id="grid"></main>
+<main><div id="grid"></div></main>
+<div id="tip"></div>
 <dialog id="dlg">
   <div class="dlg">
     <div class="dlg-head">
       <h2 id="dlgTitle"></h2>
+      <nav class="dlg-social" id="dlgSocial" aria-label="Watch it being coded"></nav>
+      <button class="evo" id="evoBtn" hidden>🧬 Evolution</button>
       <button id="copy">📋 Copy code</button>
       <a id="open" target="_blank" rel="noopener">↗ Open</a>
       <button class="ghost" id="close">✕</button>
@@ -144,13 +155,7 @@
     <pre class="dlg-code" id="dlgCode"></pre>
   </div>
 </dialog>
-<footer>
-  Watch them being coded:
-  <a href="https://www.youtube.com/@codezilla.studio">YouTube</a> ·
-  <a href="https://www.tiktok.com/@codezilla.studio">TikTok</a> ·
-  <a href="https://www.instagram.com/codezilla.studio">Instagram</a><br><br>
-  Fan art – Pokémon © Nintendo / Game Freak / Creatures. Not affiliated.
-</footer>
+<footer>Click a Pokémon to see its code · Fan art – Pokémon © Nintendo / Game Freak / Creatures. Not affiliated.</footer>
 <script>
 const REPO = 'codezilla-studio/coding-all-151-pokemon';
 const NAMES = ['Bulbasaur','Ivysaur','Venusaur','Charmander','Charmeleon','Charizard','Squirtle','Wartortle','Blastoise','Caterpie',
@@ -173,7 +178,7 @@ const TYPE = {
   N: ['Normal', '#e5e7eb'], P: ['Poison', '#d8b4fe'], D: ['Ground', '#e7c9a0'], Y: ['Fairy', '#f9a8d4'], K: ['Fighting', '#fca5a5'],
   S: ['Psychic', '#f0abfc'], R: ['Rock', '#d6d3d1'], H: ['Ghost', '#c4b5fd'], I: ['Ice', '#bae6fd'], A: ['Dragon', '#a5b4fc'],
 };
-// Entwicklungslinien – ein Array im Array = Verzweigung (Eevee)
+// Entwicklungslinien (für den 🧬-Knopf in der Code-Ansicht) – ein Array im Array = Verzweigung (Eevee)
 const LINES = [[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,15],[16,17,18],[19,20],[21,22],[23,24],[25,26],[27,28],[29,30,31],
   [32,33,34],[35,36],[37,38],[39,40],[41,42],[43,44,45],[46,47],[48,49],[50,51],[52,53],[54,55],[56,57],[58,59],[60,61,62],
   [63,64,65],[66,67,68],[69,70,71],[72,73],[74,75,76],[77,78],[79,80],[81,82],[83],[84,85],[86,87],[88,89],[90,91],[92,93,94],
@@ -184,7 +189,30 @@ const LINES = [[1,2,3],[4,5,6],[7,8,9],[10,11,12],[13,14,15],[16,17,18],[19,20],
 const pad = n => String(n).padStart(3, '0');
 const slug = n => NAMES[n - 1].toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '');
 const fileOf = n => `${pad(n)}-${slug(n)}.html`;
+const colorOf = n => TYPE[TYPES[n - 1]][1];
 const grid = document.getElementById('grid');
+let coded = new Set(), live = new Set();   // coded = liegt im Repo · live = Video ist schon online → wird gezeigt
+
+// ⏰ Freischalten nach Video-Plan (Uhrzeit Berlin): ab #004 drei pro Tag um 12, 17 und 21 Uhr
+const SCHEDULE = { first: 4, day: [2026, 11, 15], times: [12, 17, 21] };
+// Ausnahmen, falls sich der Plan verschiebt, z. B. 40: '2026-12-02 17:00' (alle folgenden rechnen weiter nach Plan)
+const RELEASE = {};
+// Berliner Ortszeit → Zeitpunkt (Sommer-/Winterzeit automatisch)
+function berlin(y, mo, d, h, mi = 0) {
+  const guess = Date.UTC(y, mo - 1, d, h, mi);
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Berlin', hourCycle: 'h23',
+    year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' }).formatToParts(guess).map(x => [x.type, +x.value]));
+  return guess - (Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) - guess);
+}
+function releaseOf(n) {
+  if (RELEASE[n]) { const [y, mo, d, h, mi] = RELEASE[n].split(/\D+/).map(Number); return berlin(y, mo, d, h, mi || 0); }
+  if (n < SCHEDULE.first) return 0;
+  const k = n - SCHEDULE.first, [y, mo, d] = SCHEDULE.day;
+  return berlin(y, mo, d + Math.floor(k / SCHEDULE.times.length), SCHEDULE.times[k % SCHEDULE.times.length]);
+}
+const whenText = t => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', weekday: 'short', day: 'numeric', month: 'short',
+  hour: '2-digit', minute: '2-digit' }).format(t);
+let unlockTimer;
 
 // Welche Dateien liegen im Repo? Erst über die GitHub-API, sonst jede Datei einzeln anfragen
 async function codedSet() {
@@ -199,62 +227,91 @@ async function codedSet() {
   }
 }
 
-function card(n, coded) {
-  const [typeName, color] = TYPE[TYPES[n - 1]];
-  const el = document.createElement(coded ? 'button' : 'div');
-  el.className = 'card' + (coded ? '' : ' todo');
-  el.style.setProperty('--c', color);
-  el.innerHTML = coded
-    ? `<div class="frame"><iframe src="${fileOf(n)}" loading="lazy" tabindex="-1" title="${NAMES[n - 1]}"></iframe></div>
-       <div class="name"><b>#${pad(n)}</b>${NAMES[n - 1]}<span class="type">${typeName}</span></div>`
-    : `<div class="frame">?</div><div class="name"><b>#${pad(n)}</b>???<span class="type">&nbsp;</span></div>`;
-  if (coded) el.onclick = () => openCode(n, color);
-  return el;
-}
-
-function render(coded) {
+// Alle 151 als Kacheln in Pokédex-Reihenfolge – Entwicklungen stehen so automatisch nebeneinander
+function render() {
   grid.innerHTML = '';
-  const arrow = () => Object.assign(document.createElement('span'), { className: 'arrow', textContent: '→' });
-  for (const line of LINES) {
-    const box = document.createElement('div'), steps = document.createElement('div');
-    box.className = 'line'; steps.className = 'steps';
-    line.forEach((step, k) => {
-      if (k) steps.appendChild(arrow());
-      if (Array.isArray(step)) {
-        const br = document.createElement('div');
-        br.className = 'branch';
-        step.forEach(n => br.appendChild(card(n, coded.has(n))));
-        steps.appendChild(br);
-      } else steps.appendChild(card(step, coded.has(step)));
-    });
-    box.appendChild(steps);
-    // Linie komplett gecodet → 🧬-Knopf mit allen Stufen nebeneinander
-    const all = line.flat();
-    if (all.length > 1 && all.every(n => coded.has(n))) {
-      const color = TYPE[TYPES[all[0] - 1]][1];
-      const btn = Object.assign(document.createElement('button'), { className: 'evo', textContent: '🧬 Evolution' });
-      btn.style.setProperty('--c', color);
-      btn.onclick = () => openEvo(all, color);
-      box.appendChild(btn);
-    }
-    grid.appendChild(box);
+  const now = Date.now();
+  live = new Set([...coded].filter(n => releaseOf(n) <= now));
+  // Nächstes Pokémon automatisch freischalten, wenn die Seite offen bleibt
+  clearTimeout(unlockTimer);
+  const next = Math.min(...[...coded].filter(n => !live.has(n)).map(releaseOf));
+  if (isFinite(next)) unlockTimer = setTimeout(render, Math.min(next - now + 1000, 2 ** 31 - 1));
+  for (let n = 1; n <= 151; n++) {
+    const done = live.has(n), el = document.createElement(done ? 'button' : 'div');
+    el.className = 'card' + (done ? '' : ' todo');
+    el.style.setProperty('--c', colorOf(n));
+    el.dataset.n = n;
+    el.innerHTML = (done ? `<iframe src="${fileOf(n)}" tabindex="-1" title="${NAMES[n - 1]}"></iframe>` : '') + `<span class="nr">${n}</span>`;
+    if (done) { el.onclick = () => openCode(n); el.setAttribute('aria-label', `#${pad(n)} ${NAMES[n - 1]}`); }
+    grid.appendChild(el);
   }
-  document.getElementById('count').textContent = `${coded.size} / 151 coded`;
-  requestAnimationFrame(() => { document.getElementById('bar').style.width = `${coded.size / 151 * 100}%`; });
+  document.getElementById('count').textContent = `${live.size} / 151 coded`;
+  requestAnimationFrame(() => { document.getElementById('bar').style.width = `${live.size / 151 * 100}%`; });
+  fit();
 }
 
-// Klick auf eine Karte: Bild links, Code rechts, „Copy code“
-const dlg = document.getElementById('dlg');
+// Größte Kachelgröße suchen, bei der alle 151 in den freien Platz passen
+function fit() {
+  const main = grid.parentElement, cs = getComputedStyle(main);
+  const W = main.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const H = main.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  const g = W < 500 ? 3 : 5;
+  let best = 0, cols = 1;
+  for (let c = 1; c <= 151; c++) {
+    const rows = Math.ceil(151 / c);
+    const s = Math.min((W - (c - 1) * g) / c, (H - (rows - 1) * g) / rows);
+    if (s > best) { best = s; cols = c; }
+  }
+  const s = Math.max(18, Math.floor(best));
+  grid.style.setProperty('--s', `${s}px`);
+  grid.style.setProperty('--k', (s - 4) / 600);   // Vorschau-Seite (600 px) auf Kachelgröße minus Rand
+  grid.style.setProperty('--cols', cols);
+  grid.style.setProperty('--g', `${g}px`);
+}
+new ResizeObserver(fit).observe(grid.parentElement);
+
+// Name beim Drüberfahren
+const tip = document.getElementById('tip');
+grid.addEventListener('pointerover', e => {
+  const c = e.target.closest('.card');
+  if (!c || e.pointerType === 'touch') return;
+  const n = +c.dataset.n;
+  tip.style.setProperty('--c', colorOf(n));
+  tip.innerHTML = live.has(n) ? `<b>#${pad(n)}</b>${NAMES[n - 1]}<span>${TYPE[TYPES[n - 1]][0]}</span>`
+    : coded.has(n) ? `<b>#${pad(n)}</b>??? <span>🔒 unlocks ${whenText(releaseOf(n))}</span>`
+    : `<b>#${pad(n)}</b>??? <span>coming soon</span>`;
+  const r = c.getBoundingClientRect();
+  tip.style.display = 'block';
+  const tw = tip.offsetWidth;
+  tip.style.left = `${Math.min(innerWidth - tw - 6, Math.max(6, r.left + r.width / 2 - tw / 2))}px`;
+  tip.style.top = `${r.top > 40 ? r.top - tip.offsetHeight - 8 : r.bottom + 8}px`;
+});
+grid.addEventListener('pointerout', e => { if (!e.relatedTarget?.closest?.('.card')) tip.style.display = 'none'; });
+
+// Klick auf eine Kachel: Bild links, Code rechts, „Copy code“, ggf. 🧬-Knopf
+const dlg = document.getElementById('dlg'), evoBtn = document.getElementById('evoBtn');
+// Kanal-Knöpfe aus dem Kopf übernehmen – nur die Symbole
+document.querySelectorAll('.socials a').forEach(a => {
+  const b = a.cloneNode(true);
+  [...b.childNodes].forEach(n => { if (n.nodeType === 3) n.remove(); });
+  b.title = `Watch on ${a.title}`; b.setAttribute('aria-label', b.title);
+  document.getElementById('dlgSocial').appendChild(b);
+});
 let codeText = '';
 const dlgArt = document.getElementById('dlgArt'), openBtn = document.getElementById('open');
-async function openCode(n, color) {
+async function openCode(n) {
+  const color = colorOf(n);
   dlg.style.setProperty('--c', color);
   document.getElementById('dlgTitle').innerHTML = `<b>#${pad(n)}</b> ${NAMES[n - 1]}`;
   dlgArt.className = 'dlg-art';
   dlgArt.innerHTML = `<iframe src="${fileOf(n)}" title="${NAMES[n - 1]}"></iframe>`;
   openBtn.href = fileOf(n); openBtn.hidden = false;
+  // Ganze Linie gecodet → 🧬 Evolution anbieten
+  const line = LINES.find(l => l.flat().includes(n)).flat();
+  evoBtn.hidden = !(line.length > 1 && line.every(k => live.has(k)));
+  evoBtn.onclick = () => openEvo(line, colorOf(line[0]));
   document.getElementById('dlgCode').textContent = 'Loading code …';
-  dlg.showModal();
+  if (!dlg.open) dlg.showModal();
   try { codeText = await (await fetch(fileOf(n))).text(); } catch { codeText = ''; }
   document.getElementById('dlgCode').textContent = codeText || 'Could not load the code – use “Open” instead.';
 }
@@ -266,9 +323,9 @@ async function openEvo(nums, color) {
   dlgArt.className = 'dlg-art row';
   dlgArt.innerHTML = nums.map((n, k) => (k ? '<span class="arrow">→</span>' : '') +
     `<iframe src="${fileOf(n)}" title="${NAMES[n - 1]}"></iframe>`).join('');
-  openBtn.hidden = true;
+  openBtn.hidden = true; evoBtn.hidden = true;
   document.getElementById('dlgCode').textContent = 'Loading code …';
-  dlg.showModal();
+  if (!dlg.open) dlg.showModal();
   const parts = await Promise.all(nums.map(n => fetch(fileOf(n)).then(r => r.text()).catch(() => '')));
   codeText = parts.map((t, k) => `<!-- ===== #${pad(nums[k])} ${NAMES[nums[k] - 1]} ===== -->\n${t}`).join('\n\n');
   document.getElementById('dlgCode').textContent = parts.every(Boolean) ? codeText : 'Could not load all stages – try again later.';
@@ -287,10 +344,14 @@ const DINO = ['................','........dddddd..','.......dggggggd.','.......d
   '.....pdggggd....','....pdgggggdd...','..ppdgggggggld..','.pdggggggllld...','dgggggggglld....','dd..dggggld.....',
   '....dggdggd.....','....dgd.dgd.....','....dgd.dgd.....','...ddd..ddd.....'];
 const DC = { d: '#14532d', g: '#4ade80', l: '#bbf7d0', w: '#ffffff', k: '#0a0a10', p: '#f9a8d4' };
-document.querySelector('#dino i').style.boxShadow = DINO.flatMap((row, y) =>
-  [...row].map((ch, x) => ch === '.' ? null : `${(x + 1) * 6}px ${(y + 1) * 6}px ${DC[ch]}`)).filter(Boolean).join(',');
+function drawDino() {
+  const el = document.querySelector('#dino i'), p = el.offsetWidth || 3;
+  el.style.boxShadow = DINO.flatMap((row, y) =>
+    [...row].map((ch, x) => ch === '.' ? null : `${(x + 1) * p}px ${(y + 1) * p}px ${DC[ch]}`)).filter(Boolean).join(',');
+}
+drawDino(); matchMedia('(max-width: 760px)').addEventListener('change', drawDino);
 
-// Untertitel wird wie Code getippt: .pokemon { pixels: css; images: none; }
+// Untertitel wird wie Code getippt: .pokemon { pixels: 100% css; images: none; }
 const TYPED = [['k', '.pokemon'], ['', ' { '], ['', 'pixels: '], ['s', '100% css'], ['', '; '], ['', 'images: '], ['s', 'none'], ['', '; }']];
 (function typeIt() {
   const el = document.getElementById('typed');
@@ -308,7 +369,7 @@ const TYPED = [['k', '.pokemon'], ['', ' { '], ['', 'pixels: '], ['s', '100% css
   setTimeout(step, 500);
 })();
 
-render(new Set());
-codedSet().then(render).catch(() => { document.getElementById('count').textContent = 'Could not load the list – try again later.'; });
+render();
+codedSet().then(s => { coded = s; render(); }).catch(() => { document.getElementById('count').textContent = 'Could not load the list – try again later.'; });
 </script>
 </html>

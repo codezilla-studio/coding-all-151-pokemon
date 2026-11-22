@@ -193,8 +193,13 @@ const colorOf = n => TYPE[TYPES[n - 1]][1];
 const grid = document.getElementById('grid');
 let coded = new Set(), live = new Set();   // coded = liegt im Repo · live = Video ist schon online → wird gezeigt
 
-// ⏰ Freischalten nach Video-Plan (Uhrzeit Berlin): ab #004 drei pro Tag um 12, 17 und 21 Uhr
-const SCHEDULE = { first: 4, day: [2026, 11, 15], times: [12, 17, 21] };
+// ⏰ Freischalten nach Video-Plan (Uhrzeit Berlin)
+// Bis #026: drei pro Tag um 12/17/21 Uhr ab 15.11. (Entwicklungen extra um 00 Uhr)
+// Ab #027: vier Termine pro Tag (00/12/17/21 Uhr), alles der Reihe nach – nach jeder fertigen Linie belegt ihre Entwicklung einen Termin
+// PLAN: ab welcher Nummer, erster Termin – verschiebt sich der Plan, eine Zeile anhängen
+const SCHEDULE = { first: 4, times: [12, 17, 21], slots: [0, 12, 17, 21], plan: [
+  { from: 27, start: [2026, 11, 23, 12] },
+] };
 // Ausnahmen, falls sich der Plan verschiebt, z. B. 40: '2026-12-02 17:00' (alle folgenden rechnen weiter nach Plan)
 const RELEASE = {};
 // Berliner Ortszeit → Zeitpunkt (Sommer-/Winterzeit automatisch)
@@ -207,8 +212,16 @@ function berlin(y, mo, d, h, mi = 0) {
 function releaseOf(n) {
   if (RELEASE[n]) { const [y, mo, d, h, mi] = RELEASE[n].split(/\D+/).map(Number); return berlin(y, mo, d, h, mi || 0); }
   if (n < SCHEDULE.first) return 0;
-  const k = n - SCHEDULE.first, [y, mo, d] = SCHEDULE.day;
-  return berlin(y, mo, d + Math.floor(k / SCHEDULE.times.length), SCHEDULE.times[k % SCHEDULE.times.length]);
+  const p = SCHEDULE.plan.filter(x => x.from <= n).pop();
+  if (!p) {
+    const k = n - SCHEDULE.first;
+    return berlin(2026, 11, 15 + Math.floor(k / 3), SCHEDULE.times[k % 3]);
+  }
+  // Termine ab dem Planpunkt durchzählen: jedes Pokémon einer, jede fertige Linie danach noch einer
+  let slot = 0;
+  for (let m = p.from; m < n; m++) slot += 1 + (LINES.some(l => l.length > 1 && l.every(Number.isInteger) && l[l.length - 1] === m) ? 1 : 0);
+  const [y, mo, d, h] = p.start, at = SCHEDULE.slots.indexOf(h) + slot;
+  return berlin(y, mo, d + Math.floor(at / 4), SCHEDULE.slots[at % 4]);
 }
 const whenText = t => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', weekday: 'short', day: 'numeric', month: 'short',
   hour: '2-digit', minute: '2-digit' }).format(t);
